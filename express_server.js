@@ -1,5 +1,7 @@
+const cookieParser = require('cookie-parser');
 const express = require("express");
 const app = express();
+app.use(cookieParser())
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
@@ -15,27 +17,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
 // home page
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  let username = req.cookies["username"] ? req.cookies["username"] : '';
+  const templateVars = { urls: urlDatabase, username: username };
   res.render("urls_index", templateVars);
 });
 
 // new url page
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let username = req.cookies["username"] ? req.cookies["username"] : '';
+  const templateVars = { username: username };
+  // res.redirect("/urls");
+  res.render("urls_new", templateVars);
 });
 
 // short url page
