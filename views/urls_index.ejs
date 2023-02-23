@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-
 <html lang="en">
-  <header>
-    <%- include('partials/_header') %>
-  </header>
   <head>
     <meta charset="utf-8" />
     <meta
@@ -20,6 +16,7 @@
     />
     <title>TinyApp</title>
   </head>
+  <%- include('partials/_header') %>
   <body>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
@@ -35,10 +32,26 @@
         <tbody>
           <% for (let id in urls) { %>
             <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
-              <td><form method="GET" action="/urls/<%= id %>"><button class="btn btn-primary">Edit</button></form></td>
-              <td><form method="POST" action="/urls/<%= id %>/delete"><button class="btn btn-primary">Delete</button></form></td>
+              <td><a href="/urls/<%= id %>"><%= id %></a></td>
+              <td>
+                <a href="<%= urls[id] %>"><%= urls[id].longURL %></a>
+              </td>
+              <td>
+                <form action="/urls/<%= id %>" method="GET">
+                    <button 
+                    type="submit" 
+                    name="EditURL"
+                    class="btn btn-primary btn-sm"> Edit </button>
+                </form>
+              </td>
+              <td>
+                <form action="/urls/<%= id %>/delete" method="POST">
+                    <button 
+                    type="submit" 
+                    name="deleteId"
+                    class="btn btn-outline-danger btn-sm"> Delete </button>
+                </form>
+              </td>
             </tr>
           <% } %>
         </tbody>
