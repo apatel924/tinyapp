@@ -45,6 +45,13 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+// edit
+app.post('/urls/:id', (req, res) => {
+  const id = req.body.longURL;
+  urlDatabase[id] = newURL;
+  res.redirect('/urls');
+})
+
 // Delete entry
 app.post('/urls/:id/delete', (req, res) => {
   const id = req.params.id;
@@ -52,15 +59,37 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 })
 
-app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
-})
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]],
+  };
+  res.render("urls_login", templateVars);
+});
 
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
   res.redirect('/urls');
 })
+
+const userLookup = function (email) {
+  for (let user in users) {
+    if (email === users[user]["email"]) {
+      return user;
+    }
+  }
+  return null;
+};
+
+app.post("/register", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  if (!email || !password) {
+    return res.status(400).send("Please input username AND password");
+  }
+  if (userLookup(email)) {
+    return res.status(400).send("Account exists. Please login");
+  }
+});
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console

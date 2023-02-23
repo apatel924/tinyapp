@@ -20,6 +20,7 @@
       <% if(username) { %>
         <h3>
           Logged in as: <%=username%>!
+          Logged in as: <%=user.email%>!
         </h3>
         <form action="/logout" method="POST">
           <button type="submit" class="btn btn-primary">Logout</button>
