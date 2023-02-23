@@ -36,19 +36,14 @@ const urlDatabase = {
   },
 };
 
-const userLookupById = (user_id) => {
-  return users[user_id];
-};
-
-const urlsForUser = (user_id) => {
-  const allKeys = Object.keys(urlDatabase);
-  const userURLs ={};
-  for (let entry of allKeys) {
-    if (urlDatabase[entry].userID === user_id) {
-      userURLs[entry] = urlDatabase[entry];
-    };
-  };
-  return userURLs;
+// HELPER FUNCTIONS
+function getUserbyEmail(users, email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
 }
 
 const validateURLForUser = (URLid, user_id) => {
@@ -59,66 +54,65 @@ const validateURLForUser = (URLid, user_id) => {
   return true
 }
 
-const getUserByEmail = function (email) {
-  for (let user in users) {
-    if (email === users[user]["email"]) {
-      return user;
-    }
-  }
-  return null;
-};
+// Get functions
 
-// home page
-app.get('/urls', (req, res) => {
-  if (!req.cookies.user_id) {
-    res.redirect('/urls_login')
-  }
-  const userURLs = urlsForUser(req.cookies.user_id);
-  const templateVars = { urls: userURLs, user_id: userLookupById(req.cookies.user_id) };
-  res.render('urls_index', templateVars);
+// route handler
+app.get("/urls", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[userId],
+  };
+  res.render("urls_index", templateVars);
+});
+
+// json object
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
 });
 
 // new url page
-app.get('/urls/new', (req, res) => {
-  if (!req.cookies.user_id) {
-    res.redirect('/urls_login')
-  } 
-  const templateVars = { user_id: userLookupById(req.cookies.user_id) };
-  res.render('urls_new', templateVars);
+app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]],
+  };
+  res.render("urls_new", templateVars);
 });
 
 // short url page
-app.get('/urls/:id', (req, res) => {
-  if (!req.cookies.user_id) {
-    res.redirect('/urls_login')
-  }
-  const URLid = req.params.id;
-  const user_id = req.cookies.user_id;
-  if (!validateURLForUser(URLid, user_id)){
-    return res.status(404).send('404 not found');
-  }
-  const longURL = urlDatabase[URLid].longURL;
-  const templateVars = { URLid, longURL, user_id: userLookupById(req.cookies.user_id)  };
-  res.render('urls_shows', templateVars);
+app.get("/urls/:id", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]],
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+  };
+  res.render("urls_show", templateVars);
 });
 
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id; 
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
+});
+
+
 // register
-app.get('/urls_register', (req, res) => {
-  if (req.cookies.user_id) {
-    res.redirect('/urls')
-  }
-  const templateVars = {user_id: null};
-  res.render('urls_register', templateVars);
+app.get("/urls_register", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]],
+  };
+  res.render("urls_register", templateVars);
 });
 
 // login page
-app.get("/url_login", (req, res) => {
+app.get("/urls_login", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]],
   };
   res.render("urls_login", templateVars);
 });
 
+// POSTS
 // new url
 app.post('/urls', (req, res) => {
   if (!req.cookies.user_id) {
@@ -160,15 +154,19 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 // Login
-app.post('/login', (req, res) => {
+app.post("/urls_login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const targetUser = getUserByEmail(email);
-   if (!targetUser || targetUser.password !== password) {
-    return res.status(403).send('403 - Forbidden <br> Invalid combination')
+  const foundUser = getUserbyEmail(users, email);
+  console.log("foundUser", foundUser);
+  if (!foundUser) {
+    return res.status(403).send("Invalid email or password.");
   }
-  res.cookie('user_id', targetUser.id);
-  res.redirect(`/urls`);
+  if (foundUser.password !== password) {
+    return res.status(403).send("Invalid email or password.");
+  }
+  res.cookie("user_id", foundUser.id);
+  res.redirect("/urls");
 });
 
 // Logout
