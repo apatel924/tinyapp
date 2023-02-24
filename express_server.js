@@ -1,5 +1,6 @@
 const cookieSession = require('cookie-session');
 const express = require("express");
+const morgan = require('morgan');
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -14,12 +15,12 @@ const {
 } = require('./helpers.js');
 
 app.set("view engine", "ejs");
+app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
-  name: "session",
-  keys: ["user_id"],
-})
-);
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
 
 const bcrypt = require("bcryptjs");
 
@@ -95,7 +96,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 // register
-app.get("/urls_register", (req, res) => {
+app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.session["user_id"]],
   };
@@ -103,7 +104,7 @@ app.get("/urls_register", (req, res) => {
 });
 
 // login page
-app.get("/urls_login", (req, res) => {
+app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.session["user_id"]],
   };
