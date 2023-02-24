@@ -16,9 +16,9 @@ const {
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
-    name: "session",
-    keys: ["user_id"],
-  })
+  name: "session",
+  keys: ["user_id"],
+})
 );
 
 const bcrypt = require("bcryptjs");
@@ -89,7 +89,7 @@ app.get("/urls/:id", isLoggedIn, (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id; 
+  const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
@@ -123,10 +123,10 @@ app.get("/login", isLoggedOut, (req, res) => {
 // new url
 app.post('/urls', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(403).send('403 - Forbidden Access <br> Login!')
+    return res.status(403).send('403 - Forbidden Access <br> Login!');
   }
   const URLid = generateRandomString();
-  urlDatabase[URLid] ={};
+  urlDatabase[URLid] = {};
   urlDatabase[URLid].longURL = req.body.longURL;
   urlDatabase[URLid].userID = req.session.user_id;
   res.redirect(`/urls/${URLid}`);
@@ -135,13 +135,13 @@ app.post('/urls', (req, res) => {
 // edit
 app.post('/urls/:id', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(403).send('403 Forbidden Access <br> Login!')
-  };
+    return res.status(403).send('403 Forbidden Access <br> Login!');
+  }
   const URLid = req.params.id;
   const user_id = req.session.user_id;
-  if (!validateURLForUser(URLid, user_id)){
+  if (!validateURLForUser(URLid, user_id)) {
     return res.status(404).send('404 not found');
-  };
+  }
   const newURL = req.body.longURL;
   urlDatabase[URLid].longURL = newURL;
   res.redirect(`/urls`);
@@ -150,10 +150,10 @@ app.post('/urls/:id', (req, res) => {
 // Delete entry
 app.post('/urls/:id/delete', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(403).send('403 - Forbidden Access <br> Login!')
+    return res.status(403).send('403 - Forbidden Access <br> Login!');
   }
   const URLid = req.params.id;
-  if (!validateURLForUser(URLid, req.session.user_id)){
+  if (!validateURLForUser(URLid, req.session.user_id)) {
     return res.status(404).send('404 not found');
   }
   delete urlDatabase[URLid];
@@ -177,7 +177,7 @@ app.post("/login", (req, res) => {
 
 // Logout
 app.post("/logout", (req, res) => {
-  req.session = null
+  req.session = null;
   res.redirect('/urls');
 });
 
@@ -189,7 +189,7 @@ app.post("/register", (req, res) => {
   }
   const foundUser = getUserbyEmail(users, email);
   if (foundUser) {
-    return res.status(400).send('400 - Bad Request <br> Email already in use')
+    return res.status(400).send('400 - Bad Request <br> Email already in use');
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
   newUser = {

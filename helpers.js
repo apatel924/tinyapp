@@ -1,7 +1,7 @@
 // HELPER FUNCTIONS
 
 function generateRandomString() {
-  return (Math.random().toString(36).substring(2, 6))
+  return (Math.random().toString(36).substring(2, 6));
 }
 
 function getUserbyEmail(users, email) {
@@ -11,15 +11,15 @@ function getUserbyEmail(users, email) {
     }
   }
   return null;
-};
+}
 
-function validateURLForUser (URLid, user_id) {
+function validateURLForUser(URLid, user_id) {
   const userURLs = urlsForUser(user_id);
-  if (!userURLs[URLid]){
+  if (!userURLs[URLid]) {
     return false;
-  };
-  return true
-};
+  }
+  return true;
+}
 
 function getUserbyID(users, ID) {
   for (const userID in users) {
@@ -27,7 +27,7 @@ function getUserbyID(users, ID) {
       return users[userID];
     }
   }
-};
+}
 
 function urlsForUser(id) {
   let userUrls = {};
@@ -37,7 +37,7 @@ function urlsForUser(id) {
     }
   }
   return userUrls;
-};
+}
 
 function isLoggedIn(req, res, next) {
   const userId = req.session["user_id"];
@@ -46,7 +46,7 @@ function isLoggedIn(req, res, next) {
   } else {
     res.redirect("/login");
   }
-};
+}
 
 function isLoggedOut(req, res, next) {
   const userID = req.session['user_id'];
@@ -55,7 +55,7 @@ function isLoggedOut(req, res, next) {
   } else {
     res.redirect('/urls');
   }
-};
+}
 
 module.exports = {
   getUserbyEmail,
