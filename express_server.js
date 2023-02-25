@@ -2,27 +2,28 @@ const cookieSession = require('cookie-session');
 const express = require("express");
 const morgan = require('morgan');
 const app = express();
+const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
 
+
+app.set("view engine", "ejs");
+
 const {
-  getUserbyEmail,
+  getUserByEmail,
   validateURLForUser,
-  getUserbyID,
+  getUserByID,
   urlsForUser,
   isLoggedIn,
   isLoggedOut,
   generateRandomString
 } = require('./helpers.js');
 
-app.set("view engine", "ejs");
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
-
-const bcrypt = require("bcryptjs");
 
 const users = {
   userRandomID: {
@@ -48,14 +49,18 @@ const urlDatabase = {
   },
 };
 
+const userLookupById = (user_id, users) => {
+  return users[user_id];
+};
+
 // Get functions
 
 // route handler
 app.get("/urls", isLoggedIn, (req, res) => {
   const userId = req.session["user_id"];
   const templateVars = {
-    urls: urlsForUser(userId),
-    user: getUserbyID(users, userId),
+    urls: urlsForUser(userId, urlDatabase),
+    user: getUserByID(users, userId),
   };
   res.render("urls_index", templateVars);
 });
@@ -69,7 +74,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls/new", isLoggedIn, (req, res) => {
   const userId = req.session["user_id"];
   const templateVars = {
-    user: getUserbyID(users, userID),
+    user: getUserByID(users, userId),
   };
   res.render("urls_new", templateVars);
 });
@@ -77,9 +82,7 @@ app.get("/urls/new", isLoggedIn, (req, res) => {
 // short url page
 app.get("/urls/:id", isLoggedIn, (req, res) => {
   if (req.session["user_id"] !== urlDatabase[req.params.id].userID) {
-    return res.send(
-      '<html><body>Error 401: Page not accessible </body></html>'
-    );
+    return res.send("Page not accessible")
   }
   const templateVars = {
     user: users[req.session["user_id"]],
@@ -88,6 +91,7 @@ app.get("/urls/:id", isLoggedIn, (req, res) => {
   };
   res.render("urls_shows", templateVars);
 });
+
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
@@ -115,12 +119,24 @@ app.get("/login", (req, res) => {
 app.get("/login", isLoggedOut, (req, res) => {
   const userId = req.session["user_id"];
   const templateVars = {
-    user: getUserbyId(users, userId),
+    user: getUserByID(users, userId),
   };
   res.render("login", templateVars);
 });
 
 // POSTS
+
+app.post("/urls", (req, res) => {
+  const userId = req.session["user_id"];
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: longURL,
+    userID: userId,
+  };
+  res.redirect("/urls");
+});
+
 // new url
 app.post('/urls', (req, res) => {
   if (!req.session.user_id) {
@@ -129,43 +145,15 @@ app.post('/urls', (req, res) => {
   const URLid = generateRandomString();
   urlDatabase[URLid] = {};
   urlDatabase[URLid].longURL = req.body.longURL;
-  urlDatabase[URLid].userID = req.session.user_id;
+  urlDatabase[URLid].userId = req.session.user_id;
   res.redirect(`/urls/${URLid}`);
-});
-
-// edit
-app.post('/urls/:id', (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(403).send('403 Forbidden Access <br> Login!');
-  }
-  const URLid = req.params.id;
-  const user_id = req.session.user_id;
-  if (!validateURLForUser(URLid, user_id)) {
-    return res.status(404).send('404 not found');
-  }
-  const newURL = req.body.longURL;
-  urlDatabase[URLid].longURL = newURL;
-  res.redirect(`/urls`);
-});
-
-// Delete entry
-app.post('/urls/:id/delete', (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(403).send('403 - Forbidden Access <br> Login!');
-  }
-  const URLid = req.params.id;
-  if (!validateURLForUser(URLid, req.session.user_id)) {
-    return res.status(404).send('404 not found');
-  }
-  delete urlDatabase[URLid];
-  res.redirect(`/urls`);
 });
 
 // Login
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const foundUser = getUserbyEmail(users, email);
+  const foundUser = getUserByEmail(users, email);
   if (foundUser === null) {
     return res.status(403).send("Invalid email or password.");
   }
@@ -183,29 +171,50 @@ app.post("/logout", (req, res) => {
 });
 
 // Register
-app.post("/register", (req, res) => {
-  const { email, password } = req.body;
+app.post('/register',(req, res) =>{
+  const email = req.body.email;
+  const password = req.body.password;
+    
+  // Edge case - empty user or pass
   if (!email || !password) {
-    return res.status(400).send('400 - Bad Request <br> Invalid combination');
+    return res.status(400).send('400 - Bad Request: Invalid combination');
   }
-  const foundUser = getUserbyEmail(users, email);
-  if (foundUser) {
-    return res.status(400).send('400 - Bad Request <br> Email already in use');
+  // Edge case - user already exists
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send('400 - Bad Request: Email already in use');
   }
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  newUser = {
-    id: generateRandomString(),
+    
+  const id = generateRandomString();
+  const hashPassword = bcrypt.hashSync(password, 10);
+  const newUser = {
+    id,
     email,
-    password: hashedPassword,
+    password: hashPassword,
   };
-  users[newUser.id] = newUser;
-  req.session["user_id"] = newUser.id;
+  users[id] = newUser;
+  req.session.user_id = id;
+  res.redirect('/urls');
+});
+
+// edit while logged in
+app.post("/urls/:id", isLoggedIn, (req, res) => {
+  if (req.session["user_id"] !== urlDatabase[req.params.id].userID) {
+    return res.send('Access Restricted')
+  }
+  const shortURL = req.params.id;
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect("/urls");
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+// Delete entry while logged in
+app.post("/urls/:id/delete", isLoggedIn, (req, res) => {
+  if (req.session["user_id"] !== urlDatabase[req.params.id].userID) {
+    return res.send('Access Restricted');
+  }
+  const id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {

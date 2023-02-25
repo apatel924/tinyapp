@@ -4,7 +4,7 @@ function generateRandomString() {
   return (Math.random().toString(36).substring(2, 6));
 }
 
-function getUserbyEmail(users, email) {
+function getUserByEmail(users, email) {
   for (const userId in users) {
     if (users[userId].email === email) {
       return users[userId];
@@ -13,15 +13,7 @@ function getUserbyEmail(users, email) {
   return null;
 }
 
-function validateURLForUser(URLid, user_id) {
-  const userURLs = urlsForUser(user_id);
-  if (!userURLs[URLid]) {
-    return false;
-  }
-  return true;
-}
-
-function getUserbyID(users, ID) {
+function getUserByID(users, ID) {
   for (const userID in users) {
     if (users[userID].id === ID) {
       return users[userID];
@@ -29,7 +21,7 @@ function getUserbyID(users, ID) {
   }
 }
 
-function urlsForUser(id) {
+function urlsForUser(id, urlDatabase) {
   let userUrls = {};
   for (let url in urlDatabase) {
     if (urlDatabase[url].userID === id) {
@@ -41,7 +33,7 @@ function urlsForUser(id) {
 
 function isLoggedIn(req, res, next) {
   const userId = req.session["user_id"];
-  if (userId && getUserbyId(userId)) {
+  if (userId && getUserByID(userId)) {
     next();
   } else {
     res.redirect("/login");
@@ -50,7 +42,7 @@ function isLoggedIn(req, res, next) {
 
 function isLoggedOut(req, res, next) {
   const userID = req.session['user_id'];
-  if (!userID || !getUserbyID(userID)) {
+  if (!userID || !getUserByID(userID)) {
     next();
   } else {
     res.redirect('/urls');
@@ -58,9 +50,8 @@ function isLoggedOut(req, res, next) {
 }
 
 module.exports = {
-  getUserbyEmail,
-  validateURLForUser,
-  getUserbyID,
+  getUserByEmail,
+  getUserByID,
   urlsForUser,
   isLoggedIn,
   isLoggedOut,
