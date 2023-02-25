@@ -15,10 +15,16 @@ const testUsers = {
   }
 };
 
-describe('getUserByEmail', function() {
+describe('findUserByEmail', function() {
   it('should return a user with valid email', function() {
     const user = getUserByEmail("user@example.com", testUsers);
     const expectedUserID = "userRandomID";
-    // Write your assert statement here
+    assert.equal(user, expectedUserID);
+  });
+  
+  it('should return null for a non-existant email', function() {
+    const user = getUserByEmail("notAnEmail@example.com", testUsers);
+    const expectedUserID = null;
+    assert.equal(user, expectedUserID);
   });
 });

@@ -10,7 +10,6 @@ app.set("view engine", "ejs");
 
 const {
   getUserByEmail,
-  validateURLForUser,
   getUserByID,
   urlsForUser,
   isLoggedIn,
@@ -49,10 +48,6 @@ const urlDatabase = {
   },
 };
 
-const userLookupById = (user_id, users) => {
-  return users[user_id];
-};
-
 // Get functions
 
 // route handler
@@ -82,7 +77,7 @@ app.get("/urls/new", isLoggedIn, (req, res) => {
 // short url page
 app.get("/urls/:id", isLoggedIn, (req, res) => {
   if (req.session["user_id"] !== urlDatabase[req.params.id].userID) {
-    return res.send("Page not accessible")
+    return res.send("Page not accessible");
   }
   const templateVars = {
     user: users[req.session["user_id"]],
@@ -199,7 +194,7 @@ app.post('/register',(req, res) =>{
 // edit while logged in
 app.post("/urls/:id", isLoggedIn, (req, res) => {
   if (req.session["user_id"] !== urlDatabase[req.params.id].userID) {
-    return res.send('Access Restricted')
+    return res.send('Access Restricted');
   }
   const shortURL = req.params.id;
   const longURL = req.body.longURL;
